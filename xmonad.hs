@@ -7,7 +7,7 @@ import DBus
 import DBus.Connection
 import DBus.Message
 
-import List 
+import Data.List 
 import qualified Data.Set as S
 
 import Foreign.C.Types
@@ -118,7 +118,7 @@ isMusicPlayer = (className =? "Exaile")
 
 -- And a rule for Deluge
 isTorrentClient :: Query Bool
-isTorrentClient = (className =? "Deluge-gtk")
+isTorrentClient = (className =? "Deluge")
 
 -- Use this to float various FF windows
 isFirefoxPrefs :: Query Bool
@@ -179,7 +179,7 @@ myScratchpads = [
     NS "music" music isMusicPlayer nonFloating,
     NS "torrent" torrent isTorrentClient nonFloating
   ]
-  where term = "gnome-terminal --disable-factory --class=scratchpad --window-with-profile=Scratchpad -e 'bash -i -c screen'" 
+  where term = "gnome-terminal --disable-factory --class=scratchpad --window-with-profile=Scratchpad -e 'bash -i -c \"TERM=gnome-256color tmux\"'" 
         notepad = "/home/brettk/software/wikidpad/wikidpad"
         music = "/usr/bin/exaile"
         torrent = "/usr/bin/deluge-gtk"
@@ -322,7 +322,7 @@ myUnboundKeys =
 -- Generate our config, using the provided DBus connection to create our logger.
 myConfig dbus = gnomeConfig
   {
-    terminal = "gnome-terminal",
+    terminal = "gnome-terminal --disable-factory -e 'bash -i -c \"TERM=gnome-256color tmux\"'",
     modMask = mod4Mask,
     focusFollowsMouse = False,
     borderWidth = 1,
