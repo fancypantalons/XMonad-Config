@@ -112,6 +112,12 @@ isScratchpad = (className =? "scratchpad")
 isNotepad :: Query Bool
 isNotepad = (className =? "WikidPad.py") <&&> (fmap (isSuffixOf "Flotsam.wiki - WikidPad") title)
 
+isKeepass :: Query Bool
+isKeepass = fmap (isSuffixOf "- KeePass Password Safe") title
+
+isAndroid :: Query Bool
+isAndroid = (className =? "emulator64-arm")
+
 -- And another rule to test for exaile.
 isMusicPlayer :: Query Bool
 isMusicPlayer = (className =? "Exaile")
@@ -177,12 +183,16 @@ myScratchpads = [
     NS "terminal" term isScratchpad nonFloating,
     NS "notepad" notepad isNotepad nonFloating,
     NS "music" music isMusicPlayer nonFloating,
-    NS "torrent" torrent isTorrentClient nonFloating
+    NS "torrent" torrent isTorrentClient nonFloating,
+    NS "keepass" keepass isKeepass nonFloating,
+    NS "android" android isAndroid nonFloating
   ]
   where term = "gnome-terminal --disable-factory --class=scratchpad --window-with-profile=Scratchpad -e 'bash -i -c \"TERM=gnome-256color tmux\"'" 
         notepad = "/home/brettk/software/wikidpad/wikidpad"
         music = "/usr/bin/exaile"
         torrent = "/usr/bin/deluge-gtk"
+        keepass = "/usr/bin/keepass2"
+        android = "/opt/android-sdk-linux/tools/emulator -avd Memoria -no-boot-anim -scale 0.5"
 
 -- Here we define various special rules for how to treat windows.
 myManageHook :: [ManageHook]
@@ -206,12 +216,15 @@ myManageHook =
     isNotepad --> windowRectFloat,
     isMusicPlayer --> windowRectFloat,
     isTorrentClient --> windowRectFloat,
+    isKeepass --> windowRectFloat,
+    isAndroid --> androidRectFloat
 
     -- Otherwise, for non-dialogs, make sure we don't replace the master window
-    fmap not isDialog --> doF pushTopmostDown
+    --fmap not isDialog --> doF pushTopmostDown
   ]
   where dialogRectFloat = doRectFloat $ W.RationalRect (1/6) (1/6) (2/3) (2/3)
-        windowRectFloat = doRectFloat $ W.RationalRect (1/10) (1/10) (4/5) (4/5) 
+        windowRectFloat = doRectFloat $ W.RationalRect (1/10) (1/10) (4/5) (4/5)
+        androidRectFloat = doCenterFloat
 
 -- Here we describe our defined set of layouts.  Right now they're basically
 -- the defaults, save that I name then and then use the LayoutCombinators
@@ -279,10 +292,10 @@ myKeyMap =
     ("M-C-c", kill1),
 
     -- Directional navigation for windows
-    ("M-k", sendMessage $ Go U),
-    ("M-j", sendMessage $ Go D),
-    ("M-h", sendMessage $ Go L),
-    ("M-l", sendMessage $ Go R),
+    -- ("M-k", sendMessage $ Go U),
+    -- ("M-j", sendMessage $ Go D),
+    -- ("M-h", sendMessage $ Go L),
+    -- ("M-l", sendMessage $ Go R),
 
     -- In theory we can move windows between groups (not working yet)
     ("M-S-C-k", sendMessage $ Move U),
@@ -299,6 +312,8 @@ myKeyMap =
     ("M-d", namedScratchpadAction myScratchpads "notepad"),
     ("M-a", namedScratchpadAction myScratchpads "music"),
     ("M-f", namedScratchpadAction myScratchpads "torrent"),
+    ("M-k", namedScratchpadAction myScratchpads "keepass"),
+    ("M-l", namedScratchpadAction myScratchpads "android"),
 
     -- Swap these, as my primary display is usually on the left, not the
     -- right, and xmonad assumes the display ordering returned from the
