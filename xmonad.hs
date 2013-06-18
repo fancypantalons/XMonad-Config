@@ -4,7 +4,7 @@ import Control.OldException
 import Control.Monad
 
 import DBus
-import DBus.Connection
+import DBus.Connection as DB
 import DBus.Message
 
 import Data.List 
@@ -156,7 +156,7 @@ sanitize (x:rest)
   where xVal = fromEnum x
 
 -- Look up the logging applet over DBus
-getWellKnownName :: Connection -> IO()
+getWellKnownName :: DB.Connection -> IO()
 getWellKnownName dbus = tryGetName `catchDyn` catchFun
   where catchFun (DBus.Error _ _) = getWellKnownName dbus
         tryGetName = do
@@ -166,7 +166,7 @@ getWellKnownName dbus = tryGetName `catchDyn` catchFun
           return ()
 
 -- Log the given string to our log applet, using the provided DBus connection.
-logToDBus :: Connection -> String -> IO ()
+logToDBus :: DB.Connection -> String -> IO ()
 logToDBus dbus str = do
   msg <- newSignal "/org/xmonad/Log" "org.xmonad.Log" "Update"
   addArgs msg [String tag]
@@ -243,7 +243,7 @@ myLayoutHook = (named "Tall" $ tall) |||
         delta = 3/100
 
 -- Our log hook.  Here we use the logToDBus function to log to our panel applet.
-myLogHook :: Connection -> X()
+myLogHook :: DB.Connection -> X()
 myLogHook dbus = (fadeOutLogHook $ fadeIf isFadeEligable fadeAmount) >> (dynamicLogWithPP logConfig)
   where fadeAmount = 0xbbbbbbbb
         logConfig = defaultPP {
@@ -349,7 +349,7 @@ myConfig dbus = gnomeConfig
   }
 
 -- Run XMonad, using the provided DBus connection to configure our logger.
-runXMonad :: Connection -> IO ()
+runXMonad :: DB.Connection -> IO ()
 runXMonad dbus = do
   getWellKnownName dbus
   xmonad $ ((myConfig dbus) `additionalKeysP` myKeyMap) `removeKeysP` myUnboundKeys
