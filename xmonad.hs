@@ -191,7 +191,7 @@ myScratchpads = [
     NS "keepass" keepass isKeepass nonFloating,
     NS "android" android isAndroid nonFloating
   ]
-  where term = "gnome-terminal --disable-factory --class=scratchpad --window-with-profile=Scratchpad -e 'bash -i -c \"TERM=gnome-256color tmux\"'" 
+  where term = "sakura -f \"Inconsolata Medium 12\" --class=scratchpad -e 'bash -i -c \"TERM=gnome-256color tmux\"'" 
         notepad = "/home/brettk/software/wikidpad/wikidpad"
         music = "/usr/bin/exaile"
         torrent = "/usr/bin/deluge-gtk"
@@ -341,7 +341,7 @@ myUnboundKeys =
 -- Generate our config, using the provided DBus connection to create our logger.
 myConfig dbus = gnomeConfig
   {
-    terminal = "gnome-terminal --disable-factory -e 'bash -i -c \"TERM=gnome-256color tmux\"'",
+    terminal = "sakura -f \"Inconsolata Medium 12\" -e 'bash -i -c \"TERM=gnome-256color tmux\"'",
     modMask = mod4Mask,
     focusFollowsMouse = False,
     borderWidth = 1,
