@@ -101,6 +101,11 @@ isSplash =
 isDock :: Query Bool
 isDock = isInProperty "_NET_WM_WINDOW_TYPE" "_NET_WM_WINDOW_TYPE_DOCK"
 
+isMenu :: Query Bool
+isMenu =
+  (isInProperty "_NET_WM_WINDOW_TYPE" "_NET_WM_WINDOW_TYPE_UTILITY") <&&>
+  (hasProperty "_MOTIF_WM_HINTS")
+
 -- Matches Evolution windows that are *not* the main evolution window.  We 
 -- use this later to float Evolution windows (ie, compose, etc).
 isEvolutionChild :: Query Bool
@@ -116,7 +121,7 @@ isNotepad :: Query Bool
 isNotepad = (className =? "WikidPad.py") <&&> (fmap (isSuffixOf "Flotsam.wiki - WikidPad") title)
 
 isKeepass :: Query Bool
-isKeepass = fmap (isSuffixOf "- KeePass Password Safe") title
+isKeepass = fmap (isSuffixOf "- KeePass") title
 
 isAndroid :: Query Bool
 isAndroid = (className =? "emulator64-arm")
@@ -138,9 +143,10 @@ isFirefoxPrefs =
 -- Rule to use when determining if we should fade out a window
 isFadeEligable :: Query Bool
 isFadeEligable = isUnfocused <&&> (liftM not isSpecialWindow)
-  where isSpecialWindow = (className =? "xine") <||> 
+  where isSpecialWindow = (className =? "xine") <||>
                           (className =? "MPlayer") <||>
-                          (className =? "Mythfrontend")
+                          (className =? "Mythfrontend") <||>
+                          (className =? "jetbrains-idea-ce")
 
 -- Wrap the given string in a span tag which changes the font color to the
 -- provided color.
@@ -200,7 +206,7 @@ myManageHook =
     isFullscreen --> doFullFloat,
     --
     -- Ignore splash windows (this includes Gnome Do) and the disk ejector thinger
-    (isSplash <||> isDock <||> (className =? "Ejecter")) --> doIgnore,
+    (isMenu <||> isSplash <||> isDock <||> (className =? "Ejecter")) --> doIgnore,
 
     -- Normally, dialogs float, anchored at the upper-left.  But I prefer them
     -- centered.
