@@ -1,13 +1,16 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 import qualified Data.Map as M
 
-import Control.OldException
+import Control.Exception
 import Control.Monad
 
 import DBus
-import DBus.Connection as DB
-import DBus.Message
+import DBus.Client
+import qualified Codec.Binary.UTF8.String as UTF8
 
-import Data.List 
+import Data.List
 import qualified Data.Set as S
 
 import Foreign.C.Types
@@ -150,30 +153,25 @@ colorize fg str = wrap left right str
 -- We're just stripping high-ASCII and converting them to HTML entities.
 sanitize :: String -> String
 sanitize [] = []
-sanitize (x:rest) 
+sanitize (x:rest)
   | xVal > 127 = "&#" ++ show xVal ++ "; " ++ sanitize rest
   | otherwise  = x : sanitize rest
   where xVal = fromEnum x
 
 -- Look up the logging applet over DBus
-getWellKnownName :: DB.Connection -> IO()
-getWellKnownName dbus = tryGetName `catchDyn` catchFun
-  where catchFun (DBus.Error _ _) = getWellKnownName dbus
-        tryGetName = do
-          namereq <- newMethodCall serviceDBus pathDBus interfaceDBus "RequestName"
-          addArgs namereq [String "org.xmonad.Log", Word32 5]
-          sendWithReplyAndBlock dbus namereq 0
-          return ()
+getWellKnownName :: Client -> IO ()
+getWellKnownName dbus = do
+  requestName dbus (busName_ "org.xmonad.Log")
+                [nameAllowReplacement, nameReplaceExisting, nameDoNotQueue]
+  return ()
 
 -- Log the given string to our log applet, using the provided DBus connection.
-logToDBus :: DB.Connection -> String -> IO ()
+logToDBus :: Client -> String -> IO ()
 logToDBus dbus str = do
-  msg <- newSignal "/org/xmonad/Log" "org.xmonad.Log" "Update"
-  addArgs msg [String tag]
-  send dbus msg 0 `catchDyn` catchFun
-  return ()
-  where tag = sanitize $ "<span font=\"Terminus 9 Bold\">" ++ str ++ "</span>"
-        catchFun (DBus.Error name msg) = return 0
+  let s = (signal "/org/xmonad/Log" "org.xmonad.Log" "Update") {
+          signalBody = [toVariant ("<span font=\"Terminus 9 Bold\">" ++ (UTF8.decodeString str) ++ "</span>")]
+      }
+  emit dbus s
 
 -- My configured, persistent background apps.  Among other things, we have
 -- a terminal, a notepad application, and a music player (okay, there are no
@@ -243,7 +241,7 @@ myLayoutHook = (named "Tall" $ tall) |||
         delta = 3/100
 
 -- Our log hook.  Here we use the logToDBus function to log to our panel applet.
-myLogHook :: DB.Connection -> X()
+myLogHook :: Client -> X()
 myLogHook dbus = (fadeOutLogHook $ fadeIf isFadeEligable fadeAmount) >> (dynamicLogWithPP logConfig)
   where fadeAmount = 0xbbbbbbbb
         logConfig = defaultPP {
@@ -349,12 +347,12 @@ myConfig dbus = gnomeConfig
   }
 
 -- Run XMonad, using the provided DBus connection to configure our logger.
-runXMonad :: DB.Connection -> IO ()
+runXMonad :: Client -> IO ()
 runXMonad dbus = do
   getWellKnownName dbus
   xmonad $ ((myConfig dbus) `additionalKeysP` myKeyMap) `removeKeysP` myUnboundKeys
 
 -- Establish a DBus connection and then fire up XMonad with that connection.
 main :: IO ()
-main = withConnection Session $ runXMonad
+main = connectSession >>= runXMonad
 
