@@ -319,12 +319,8 @@ myKeyMap =
     ("M-k", namedScratchpadAction myScratchpads "keepass"),
     ("M-l", namedScratchpadAction myScratchpads "android"),
 
-    -- Swap these, as my primary display is usually on the left, not the
-    -- right, and xmonad assumes the display ordering returned from the
-    -- X server reflects the left-to-right physical arrangement of the
-    -- displays.
-    ("M-e", screenWorkspace 0 >>= flip whenJust (windows . W.view)),
-    ("M-w", screenWorkspace 1 >>= flip whenJust (windows . W.view))
+    ("M-e", screenWorkspace 1 >>= flip whenJust (windows . W.view)),
+    ("M-w", screenWorkspace 0 >>= flip whenJust (windows . W.view))
   ]
 
 -- The set of keys we want to completely unbind (so XMonad passes them through).
